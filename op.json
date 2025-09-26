@@ -1,58 +1,62 @@
 {
-    "show": {
-      "description": "Show system information",
+  "show": {
+    "description": "Show system information",
+    "type": "node",
+    "ip": {
+      "description": "Show IPv4 networking information",
       "type": "node",
-      "ip": {
-        "description": "Show IPv4 networking information",
-        "type": "node",
-        "interface": {
-          "description": "Show IP routes",
-          "type": "tagNode",
-          "command": "vtysh -c 'show ip route'",        
-          "summary": {
-            "description": "Summary of all routes",
-            "type": "leafNode",
-            "command": "vtysh -c 'show ip route summary'"
-          }
-        },
-        "route": {
-          "description": "Show IP routes",
+      "interface": {
+        "description": "Show IP routes",
+        "type": "tagNode",
+        "command": "${vyos_op_scripts_dir}/interfaces.py show_summary_extended",        
+        "summary": {
+          "description": "Summary of all routes",
+          "type": "leafNode",
+          "command": "vtysh -c 'show ip route summary'"
+        }
+      },
+      "route": {
+        "description": "Show IP routes",
+        "type": "tagNode",
+        "values": [
+          ["<x.x.x.x/24>", "IPv4 route (format IP/CIDR)"],
+          ["<x.x.x.x>", "IPv4 address"]
+          ],
+        "command": "vtysh -c 'show ip route'",        
+        "tagCommand": "vtysh -c 'show ip route {route}'",
+        "test": {
+          "description": "Summary of all routes",
           "type": "tagNode",
           "values": [
-            ["<x.x.x.x/24>", "IPv4 route (format IP/CIDR)"],
-            ["<x.x.x.x>", "IPv4 address"]
+            "ipv4net"
             ],
-          "command": "vtysh -c 'show ip route'",        
-          "tagCommand": "vtysh -c 'show ip route {route}'",
-          "test": {
-            "description": "Summary of all routes",
-            "type": "tagNode",
-            "values": [
-              "ipv4net"
-              ],
-            "tagCommand": "vtysh -c 'show ip route {route} {test}'"
-          },
-          "test2": {
-            "description": "Summary of all routes",
-            "type": "node",
-            "command": "vtysh -c 'show ip route summary'"
-          },
-          "summary": {
-            "description": "Summary of all routes",
-            "type": "leafNode",
-            "command": "vtysh -c 'show ip route summary'"
-          }
+          "tagCommand": "${vyos_op_scripts_dir}/interfaces.py show_summary_extended"
         },
-        "route6": {
-          "description": "Show IP routes",
-          "type": "tagNode",
-          "command": "vtysh -c 'show ipv6 route'",        
-          "summary": {
-            "description": "Summary of all routes",
-            "type": "leafNode",
-            "command": "vtysh -c 'show ipv6 route summary'"
-          }
+        "test2": {
+          "description": "Summary of all routes",
+          "type": "node",
+          "command": "vtysh -c 'show ip route summary'"
+        },
+        "summary": {
+          "description": "Summary of all routes",
+          "type": "leafNode",
+          "command": "vtysh -c 'show ip route summary'"
+        }
+      },
+      "route6": {
+        "description": "Show IP routes",
+        "type": "tagNode",
+        "command": "vtysh -c 'show ipv6 route'",        
+        "summary": {
+          "description": "Summary of all routes",
+          "type": "leafNode",
+          "command": "vtysh -c 'show ipv6 route summary'"
         }
       }
+    }
+  },
+  "configure": {
+    "description": "Enter configuration mode",
+    "type": "node"
   }
 }

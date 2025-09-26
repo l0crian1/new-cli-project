@@ -1,0 +1,48 @@
+{
+  "protocols": {
+    "description": "Routing protocols",
+    "type": "node",
+    "bgp": {
+      "description": "Border Gateway Protocol (BGP)",
+      "type": "node",
+      "script": "protocols_bgp.py",
+      "address-family": {
+          "description": "Lookup specific route",
+          "type": "node",
+          "ipv4-unicast": {
+            "description": "IPv4 unicast address family",
+            "type": "node"
+          },
+          "ipv6-unicast": {
+            "description": "IPv6 unicast address family",
+            "type": "node"
+          }
+      },
+      "system-as": {
+          "description": "Lookup specific route",
+          "type": "tagNode",
+          "values": ["<1-65535>", "AS number"],
+          "valueMode": "scalar"
+      }
+  },    
+    "static": {
+      "description": "Static Routing",
+      "type": "node",
+      "script": "protocols_static.py",
+      "route": {
+          "description": "Lookup specific route",
+          "type": "tagNode",
+          "values": ["ipv4net"],
+          "validator": ["ipv4_network"],
+          "next-hop": {
+            "description": "Next-hop IPv4 router address",
+            "type": "tagNode",
+            "values": ["ipv4addr"],
+            "valueMode": "scalar",
+            "multi": true,
+            "validator": ["ipv4_address"]
+          }
+        }
+    }
+  }
+}

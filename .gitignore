@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.pyzw
+utils/__pycache__/process.cpython-313.pyc
+utils/__pycache__/process.cpython-313.pyc

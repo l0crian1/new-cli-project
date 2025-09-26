@@ -5,13 +5,12 @@ from prompt_toolkit.auto_suggest import AutoSuggest, Suggestion
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import run_in_terminal
 from tabulate import tabulate
-from utils.process import cmd
 try:
     import value_help  # optional module for placeholder definitions
 except Exception:  # noqa: BLE001
     value_help = None
 
-META_KEYS = {"description", "type", "command", "values"}
+META_KEYS = {"description", "type", "command", "values", "validator", "valueMode", "multi", "script"}
 
 
 class CommandNavigator:
@@ -83,9 +82,9 @@ class CommandNavigator:
             if isinstance(item, str) and value_help is not None:
                 ref = getattr(value_help, item, None)
                 if isinstance(ref, (list, tuple)) and len(ref) >= 1:
-                    ph = str(ref[0])
-                    d = str(ref[1]) if len(ref) > 1 else ""
-                    out.append((ph, d))
+                    placeholder = str(ref[0])
+                    description = str(ref[1]) if len(ref) > 1 else ""
+                    out.append((placeholder, description))
                     continue
             # Fallback: show as a literal token
             if isinstance(item, str):
@@ -223,37 +222,7 @@ class CommandNavigator:
         # While typing a token: filter by prefix (keys only; tag value is never a key).
         return resolved_node, current_prefix, ends_with_space, CommandNavigator.filter_keys_by_prefix(child_keys, current_prefix)
 
-    def execute_current_command(self, node: Dict[str, Any], raw_text: str) -> None:
-        """
-        Execute the command bound at the current node (print the command for now).
-
-        Behavior:
-        - If at a tagNode and its value was entered, prefer 'tagCommand' when present
-        - Otherwise, run 'command' when present
-        - If neither applies, emit an 'Incomplete command: <path>' message
-
-        Parameters:
-        - node: Node resolved from the current input tokens
-        - raw_text: Full input line used to capture tag values for interpolation
-        """
-        child_map = CommandNavigator.get_children(node)
-        tag_values = self.extract_tag_values(raw_text)
-        # Prefer tagCommand when a tag value was entered for this node
-        if CommandNavigator.is_tag_node(node) and self.tag_value_entered_for_node(node, raw_text) and "tagCommand" in node:
-            command_to_execute = self._format_command_with_tags(node["tagCommand"], tag_values)
-            print(command_to_execute)
-            return
-        # Otherwise, fallback to command if present
-        if "command" in node:
-            command_to_execute = self._format_command_with_tags(node.get("command", ""), tag_values)
-            print(command_to_execute)
-            return
-        # No runnable command here; report incomplete command with the consumed path
-        path_tokens, _, _ = CommandNavigator.parse_input_tokens(raw_text)
-        _, consumed_path, _ = self.resolve_path(path_tokens)
-        path_str = " ".join(consumed_path) if consumed_path else "(root)"
-        print(f"Incomplete command: {path_str}")
-        return
+    # Note: execution-specific logic moved to utils/executor.py
 
     def _format_command_with_tags(self, command: str, tag_values: Dict[str, str]) -> str:
         """Format a command string with captured tag values; leave unknown placeholders."""
@@ -264,6 +233,8 @@ class CommandNavigator:
             return command.format_map(_Default(tag_values))
         except Exception:
             return command
+
+    # (no execution helpers in this module)
 
     def extract_tag_values(self, raw_text: str) -> Dict[str, str]:
         """
@@ -303,11 +274,7 @@ class CommandNavigator:
     def tag_value_entered_for_node(self, node: Dict[str, Any], raw_text: str) -> bool:
         """
         Determine if the specific tagNode within the current input has already
-        consumed a non-child token as its value.
-        """
-        """
-        Return True only if the given tag node has already consumed a non-child token
-        as its value in the current input line. Ignores values entered for other tag nodes.
+        consumed a non-child token as its value (ignoring other tagNodes).
         """
         try:
             tokens = shlex.split(raw_text, posix=True)
@@ -333,14 +300,7 @@ class CommandNavigator:
 
     def tag_value_entered_for_node_with_tokens(self, node: Dict[str, Any], tokens: List[str]) -> bool:
         """
-        Token-driven variant of tag value detection used while typing.
-
-        This version accepts an explicit token list so the current incomplete
-        prefix can be omitted when deciding whether a tag value has been entered.
-        """
-        """
-        Same as tag_value_entered_for_node, but driven by a provided token list.
-        Useful to ignore the current incomplete prefix while typing.
+        Token-driven variant for typing-time checks that ignores the incomplete prefix.
         """
         current_node: Dict[str, Any] = self.tree
         for token in tokens:
@@ -523,3 +483,5 @@ class FishKeyBindings:
                 print()
 
             run_in_terminal(_print_help) 
+
+            
